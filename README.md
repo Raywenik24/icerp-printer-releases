@@ -14,6 +14,8 @@ documents on a PC's local printers. This repository holds releases only; there i
 - After installing, open ICERP's "ICERP Printer" integration page and click **Set in app**.
 - The app updates itself from this repository.
 
+**[Help](help/en.md)**: install, connect to ICERP, choose printers, settings and common problems.
+
 ## Pobieranie
 
 **[Najnowsze wydanie](https://github.com/Raywenik24/icerp-printer-releases/releases/latest)**: w
@@ -26,6 +28,8 @@ sekcji *Assets* pobierz `ICERP-Printer_<wersja>_x64-setup.exe` i uruchom.
 - Po instalacji otwórz w ICERP stronę integracji „ICERP Printer” i kliknij **Ustaw w aplikacji**.
 - Aplikacja aktualizuje się sama z tego repozytorium.
 
+**[Pomoc](help/pl.md)**: instalacja, połączenie z ICERP, wybór drukarek, ustawienia i typowe problemy.
+
 ## Files in each release
 
 | File | Use |
@@ -33,3 +37,6 @@ sekcji *Assets* pobierz `ICERP-Printer_<wersja>_x64-setup.exe` i uruchom.
 | `ICERP-Printer_<version>_x64-setup.exe` | The installer |
 | `ICERP-Printer_<version>_x64-setup.exe.sig` | Its update signature |
 | `latest.json` | The update manifest the app reads |
+
+The README and the help pages are published from the app's source repository with each release;
+changes made here directly are overwritten.
