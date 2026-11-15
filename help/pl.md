@@ -14,12 +14,14 @@ Ta strona prowadzi od pobrania programu do pierwszej wydrukowanej etykiety.
 4. [Wybór drukarek](#wybór-drukarek)
 5. [Wydruk testowy](#wydruk-testowy)
 6. [Ustawienia wydruku](#ustawienia-wydruku)
-7. [Uruchamianie z Windows, powiadomienia, proxy](#uruchamianie-z-windows-powiadomienia-proxy)
-8. [Aktualizacje](#aktualizacje)
-9. [Co oznaczają stany](#co-oznaczają-stany)
-10. [Logi i diagnostyka](#logi-i-diagnostyka)
-11. [Typowe problemy](#typowe-problemy)
-12. [Odinstalowanie](#odinstalowanie)
+7. [Sprawdzanie stanu drukarki etykiet](#sprawdzanie-stanu-drukarki-etykiet)
+8. [Drukarki w systemie Windows](#drukarki-w-systemie-windows)
+9. [Uruchamianie z Windows, powiadomienia, proxy](#uruchamianie-z-windows-powiadomienia-proxy)
+10. [Aktualizacje](#aktualizacje)
+11. [Co oznaczają stany](#co-oznaczają-stany)
+12. [Logi i diagnostyka](#logi-i-diagnostyka)
+13. [Typowe problemy](#typowe-problemy)
+14. [Odinstalowanie](#odinstalowanie)
 
 ## Czego potrzebujesz
 
@@ -83,6 +85,17 @@ Jeden komputer może drukować dla kilku serwerów ICERP (na przykład testowego
 dodaj po jednym połączeniu dla każdego. Klucze są przechowywane w Menedżerze poświadczeń Windows,
 nie w pliku.
 
+### Kilka kont Windows na jednym komputerze
+
+Program instaluje się dla jednego użytkownika Windows, z własnymi ustawieniami, kluczami i historią
+zleceń. Jeśli na tym komputerze loguje się kilka osób na własne konta Windows, każde konto, które ma
+drukować, instaluje program i dostaje własny klucz: w ICERP kliknij **Dodaj komputer** osobno dla
+każdego konta. ICERP pokazuje wtedy ten komputer raz dla każdego konta, a drukarka udostępniona
+z obu kont widnieje pod oboma.
+
+Po **Przełącz użytkownika** program pierwszego konta dalej działa w tle i dalej drukuje zlecenia,
+które ICERP do niego wysyła, obok programu konta, które jest teraz zalogowane.
+
 ## Wybór drukarek
 
 ICERP widzi tylko drukarki, które mu udostępnisz.
@@ -132,7 +145,88 @@ wartość. Drukarka z własnymi wartościami ma tam napis **Własne ustawienia**
 je czyści.
 
 Rozmiar papieru pochodzi z ustawień drukarki w Windows. W drukarce etykiet ustaw w Windows papier
-o rozmiarze etykiety (Drukarki i skanery → drukarka → Preferencje drukowania).
+o rozmiarze etykiety (Drukarki i skanery → drukarka → Preferencje drukowania albo **Preferencje
+drukowania** w programie, zobacz [Drukarki w systemie Windows](#drukarki-w-systemie-windows)).
+
+## Sprawdzanie stanu drukarki etykiet
+
+Drukarka etykiet, która nie może drukować (otwarta pokrywa, brak etykiet), i tak przyjmuje etykietę
+do własnej pamięci i drukuje ją później, po naciśnięciu przycisku papieru, nawet jeśli w tym czasie
+etykietę wydrukowano ponownie z ICERP. Wychodzą wtedy dwie etykiety. Aby temu zapobiec, program może
+przed wysłaniem każdego zlecenia zapytać drukarkę, czy jest gotowa.
+
+Działa to dla **drukarek etykiet obsługujących TSPL** (takich jak 4BARCODE) podłączonych przez
+**USB** albo na **standardowym porcie TCP/IP** (raw, port 9100). Nie zaznaczaj tego dla innych
+drukarek: mogą wydrukować pytanie jako stronę dziwnych znaków.
+
+1. W zakładce Drukarki kliknij **Domyślne** (albo **Własne ustawienia**) w kolumnie **Ustawienia
+   wydruku** tej drukarki.
+2. W części **Stan drukarki** zaznacz **Sprawdzaj stan drukarki przed drukowaniem (drukarki etykiet
+   TSPL)**. Przy innym rodzaju portu pole jest wyszarzone, z uwagą, że sprawdzanie stanu działa tylko
+   dla drukarek USB i standardowych portów TCP/IP (raw 9100).
+3. **Sprawdź teraz** pyta drukarkę raz i pokazuje odpowiedź: **Gotowa**, **Drukuje**, **Otwarta
+   pokrywa**, **Brak papieru**, **Zacięcie papieru**, **Wstrzymana**, **Koniec taśmy**, **Błąd**,
+   **Nieznana odpowiedź** albo **Brak odpowiedzi**. Działa niezależnie od tego, czy pole jest
+   zaznaczone.
+
+Gdy pole jest zaznaczone, każde zlecenie dla tej drukarki, etykiety i PDF-y tak samo, jest wysyłane
+tylko wtedy, gdy drukarka odpowie **Gotowa** albo **Drukuje**. Każda inna odpowiedź wstrzymuje
+zlecenie w programie:
+
+- Zakładki Status i Logi pokazują zlecenie jako **Czeka na drukarkę: Otwarta pokrywa** (albo to, co
+  zgłasza drukarka), a ikona w zasobniku jest oznaczona, dopóki zlecenia czekają.
+- Powiadomienie Windows podaje drukarkę i jej stan: raz, gdy drukarka zaczyna wstrzymywać zlecenia,
+  i jeszcze raz, jeśli jej stan się zmieni (na przykład z Otwarta pokrywa na Brak papieru). Nie po
+  jednym na każde zlecenie.
+- Program pyta drukarkę ponownie co 2 sekundy. Gdy tylko jest gotowa (pokrywa zamknięta, rolka
+  założona), czekające zlecenia się drukują, każde raz.
+- Jeśli drukarka nie będzie gotowa, zanim zlecenie wygaśnie (domyślnie po minucie), zlecenie kończy
+  się błędem **Drukarka nie jest gotowa: …** z ostatnim stanem i nigdy nie drukuje się z opóźnieniem.
+  ICERP pokazuje je jako nieudane; wydrukuj je stamtąd ponownie.
+- **Brak odpowiedzi** też wstrzymuje zlecenia: drukarka jest wyłączona, odłączona albo
+  nieosiągalna w sieci. **Sprawdź teraz** pokaże to od razu.
+- **Drukuj stronę testową** i **Drukuj etykietę testową** też najpierw sprawdzają stan, ale nie
+  czekają: od razu mówią, co jest nie tak, i nic nie drukują.
+
+**Po wymianie rolki naciśnij przycisk papieru (podawania).** Przy zamkniętej pokrywie i bez rolki
+drukarka nadal odpowiada **Gotowa**, dopóki nie naciśniesz przycisku albo nie zostanie wysłana
+etykieta. Etykieta wysłana w tym czasie trafia do drukarki i może przepaść: aplikacja i ICERP
+pokazują ją jako wydrukowaną, ale nie wychodzi, nawet po założeniu nowej rolki. Wydrukuj ją
+ponownie z ICERP.
+
+**Jedno ograniczenie:** etykieta drukowana w chwili, gdy kończy się rolka, jest już w drukarce.
+Wyjdzie po założeniu nowej rolki i naciśnięciu przycisku papieru, nawet jeśli w tym czasie
+wydrukowano ją ponownie.
+
+## Drukarki w systemie Windows
+
+### Drukarki, które pytają o nazwę pliku
+
+„Microsoft Print to PDF”, „Microsoft XPS Document Writer” i każda drukarka na porcie `FILE:`
+otwierają okno **Zapisz jako** przy każdym zleceniu. Na komputerze, którego nikt nie pilnuje, nikt
+go nie zamknie: zlecenie zostaje w toku, ICERP oznacza je jako nieudane, a kolejne zlecenia tej
+drukarki czekają za nim. Zakładka Drukarki ostrzega o tym pod polem udostępniania takiej drukarki.
+Udostępniaj ją tylko do testów, na komputerze, przy którym ktoś siedzi.
+
+### Otwieranie kolejki i preferencji drukarki
+
+Ustawienia Windows 10 nie pokazują każdej drukarki: brakuje tam drugiej drukarki na tym samym
+porcie (na przykład „Canon MF650C Series UFR II”) i „Microsoft Print to PDF”, więc ich kolejki
+wydruku i preferencji drukowania nie da się otworzyć z Ustawień.
+
+**W programie**, dla każdej drukarki: w zakładce Drukarki kliknij **Domyślne** (albo **Własne
+ustawienia**) w kolumnie **Ustawienia wydruku** tej drukarki, a potem w części **W systemie
+Windows** kliknij **Otwórz kolejkę wydruku** albo **Preferencje drukowania**. Otworzą się okna
+systemu Windows dla tej drukarki.
+
+**Ręcznie:** naciśnij Win+R i wpisz jedno z poleceń, z nazwą drukarki dokładnie taką, jak pokazuje
+ją Windows:
+
+| Polecenie | Otwiera |
+|---|---|
+| `rundll32 printui.dll,PrintUIEntry /o /n "Nazwa drukarki"` | kolejkę wydruku |
+| `rundll32 printui.dll,PrintUIEntry /e /n "Nazwa drukarki"` | preferencje drukowania |
+| `rundll32 printui.dll,PrintUIEntry /y /n "Nazwa drukarki"` | ustawia ją jako domyślną drukarkę Windows (bez okna) |
 
 ## Uruchamianie z Windows, powiadomienia, proxy
 
@@ -141,12 +235,15 @@ Wszystko w zakładce **Ustawienia**:
 - **Uruchamianie → Uruchamiaj razem z Windows**: domyślnie włączone. Po zalogowaniu program
   uruchamia się w zasobniku, bez okna, więc etykiety drukują się bez otwierania go. Na stanowisku
   pakowania zostaw to włączone.
-- **Powiadomienia → Powiadamiaj o nieudanych zleceniach**: powiadomienie Windows podaje zlecenie,
-  drukarkę i przyczynę. Ikona w zasobniku jest oznaczana tak czy inaczej, dopóki nie otworzysz
-  zakładki Logi.
+- **Powiadomienia → Powiadamiaj o problemach z drukowaniem**: powiadomienie Windows, gdy zlecenie
+  się nie powiedzie (podaje zlecenie, drukarkę i przyczynę), oraz gdy drukarka nie jest gotowa
+  i zaczyna wstrzymywać zlecenia (zobacz [Sprawdzanie stanu drukarki
+  etykiet](#sprawdzanie-stanu-drukarki-etykiet)). Ikona w zasobniku jest oznaczana tak czy inaczej:
+  przy nieudanych zleceniach do otwarcia zakładki Logi, przy wstrzymanych, dopóki czekają.
 - **Proxy → Połączenie przez**: **Ustawienia systemu** (proxy ustawione w Windows, domyślnie),
   **Bez proxy** albo **Ręcznie** z adresem, np. `http://proxy.example.com:3128`, i opcjonalnie
   nazwą użytkownika i hasłem. Hasło jest przechowywane w Menedżerze poświadczeń Windows.
+  Jeśli Twoja sieć używa skryptu konfiguracji proxy, wpisz proxy w opcji **Ręcznie**.
 - **Wygląd → Motyw**: Systemowy, Jasny albo Ciemny.
 
 ## Aktualizacje
@@ -158,6 +255,12 @@ tam był), a powiadomienie podaje nową wersję.
 
 **Ustawienia → Aktualizacje** pokazuje zainstalowaną wersję i ostatnie sprawdzenie; **Sprawdź
 aktualizacje** (tam albo w menu w zasobniku) sprawdza od razu.
+
+**Sprawdź aktualizacje** w menu w zasobniku odpowiada powiadomieniem, nawet gdy powiadomienia są
+wyłączone: program jest aktualny, trwa pobieranie nowej wersji, nowa wersja jest gotowa (zainstaluje
+się, gdy nic nie będzie drukowane) albo sprawdzenie się nie udało (przyczyna jest w dzienniku).
+Kliknięcie powiadomienia otwiera Ustawienia → Aktualizacje. Automatyczne sprawdzanie i przycisk
+w Ustawieniach nie pokazują powiadomienia.
 
 ## Co oznaczają stany
 
@@ -179,8 +282,9 @@ ale Windows już jej nie pokazuje).
 **Dla połączenia** (kolumna każdego ICERP): **Nieudostępniona** (ICERP jej nie widzi),
 **Jeszcze nie wysłano**, **Nieaktywna** (ICERP ją ma, ale jej nie używa), **Aktywna**.
 
-**Zlecenia** (zakładki Status i Logi): **W toku**, **Wysłane do drukarki**, **Wydrukowane**,
-**Nieudane** (z przyczyną).
+**Zlecenia** (zakładki Status i Logi): **W toku**, **Czeka na drukarkę: …** (drukarka etykiet nie
+jest gotowa; zobacz [Sprawdzanie stanu drukarki etykiet](#sprawdzanie-stanu-drukarki-etykiet)),
+**Wysłane do drukarki**, **Wydrukowane**, **Nieudane** (z przyczyną).
 
 ## Logi i diagnostyka
 
@@ -210,6 +314,22 @@ ma stan **Połączono**, i kliknij w ICERP **Odśwież listę drukarek**.
 
 **Zlecenie nieudane z powodu „Drukarka offline”.** Włącz drukarkę lub ją podłącz. Program próbuje
 dalej, aż zlecenie wygaśnie w ICERP (domyślnie po minucie); potem wyślij je ponownie.
+
+**Zlecenie nieudane z powodu „Drukarka nie jest gotowa: …”.** Sprawdzanie stanu wykazało, że
+drukarka etykiet nie była gotowa (otwarta pokrywa, brak papieru, wstrzymana…), dopóki zlecenie nie
+wygasło. Zamknij pokrywę albo załóż rolkę i naciśnij przycisk papieru, potem wyślij je ponownie.
+Zobacz [Sprawdzanie stanu drukarki etykiet](#sprawdzanie-stanu-drukarki-etykiet).
+
+**Zlecenia ciągle mają stan „Czeka na drukarkę: Brak odpowiedzi”.** Program nie może się połączyć
+z drukarką etykiet: jest wyłączona, odłączona albo nieosiągalna w sieci. Włącz ją lub podłącz;
+**Sprawdź teraz** w zakładce Drukarki powinno wtedy pokazać **Gotowa**. Jeśli ta drukarka nigdy nie
+może odpowiedzieć, odznacz dla niej sprawdzanie stanu.
+
+**Zlecenie dla Print to PDF albo XPS nigdy się nie kończy.** Drukarka czeka, aż ktoś wybierze nazwę
+pliku. Zobacz [Drukarki, które pytają o nazwę pliku](#drukarki-które-pytają-o-nazwę-pliku).
+
+**Drukarki nie ma w Ustawieniach Windows.** Otwórz jej kolejkę albo preferencje z programu; zobacz
+[Otwieranie kolejki i preferencji drukarki](#otwieranie-kolejki-i-preferencji-drukarki).
 
 **„Drukarka nieudostępniona dla tego ICERP”.** Zlecenie było dla drukarki, która nie jest
 zaznaczona dla tego ICERP w zakładce Drukarki, albo nie wskazywało drukarki, a domyślna drukarka
